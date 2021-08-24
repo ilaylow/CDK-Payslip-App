@@ -30,6 +30,23 @@ export class UpdatedPipelineStackStack extends cdk.Stack {
     // Create pipeline project
     var pipelineProject = new codebuild.PipelineProject(this, 'cicd-codepipeline', {
       projectName: "cicd-codepipeline",
+      buildSpec: codebuild.BuildSpec.fromObject({
+        version: '0.2',
+        phases: {
+          post_build: {
+            commands: [
+              "echo creating imagedefinitions.json dynamically",
+              "printf '[{\"name\":\"" + repoName + "\",\"imageUri\": \"" + ecrRepository.repositoryUriForTag() + ":latest\"}]' > imagedefinitions.json",
+              "echo Build completed on `date`"
+            ]
+          }
+        },
+        artifacts: {
+          files: [
+            "imagedefinitions.json"
+          ]
+        }
+      }),
       cache: codebuild.Cache.local(codebuild.LocalCacheMode.DOCKER_LAYER, codebuild.LocalCacheMode.CUSTOM)
     });
     pipelineProject.role?.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonEC2ContainerRegistryPowerUser'));
@@ -38,6 +55,8 @@ export class UpdatedPipelineStackStack extends cdk.Stack {
     // An imagedefinitions.json file is the file that contains the name of the repo and the Image's URI
 
     var sourceOutput = new pipeline.Artifact();
+    var buildOutput = new pipeline.Artifact();
+
     var ecrSourceAction = new pipelineActions.EcrSourceAction({
       actionName: "ECRSource",
       output: sourceOutput,
@@ -45,10 +64,17 @@ export class UpdatedPipelineStackStack extends cdk.Stack {
       imageTag: "latest",
     });
 
+    var ecrBuildAction = new pipelineActions.CodeBuildAction({
+      actionName: "ECRBuild",
+      project: pipelineProject,
+      input: sourceOutput,
+      outputs: [buildOutput],
+    });
+
     var deployAction = new pipelineActions.EcsDeployAction({
       actionName: 'EcsDeployAction',
       service: this.createLoadBalancedFargateService(this, vpc, ecrRepository, pipelineProject).service,
-      input: sourceOutput,
+      input: buildOutput,
     })
 
     var cdk_pipeline = new pipeline.Pipeline(this, 'cicd_pipeline_', {
@@ -56,6 +82,10 @@ export class UpdatedPipelineStackStack extends cdk.Stack {
         {
           stageName: 'Source',
           actions: [ecrSourceAction]
+        },
+        {
+          stageName: 'Build',
+          actions: [ecrBuildAction]
         },
         {
           stageName: 'Deploy',
