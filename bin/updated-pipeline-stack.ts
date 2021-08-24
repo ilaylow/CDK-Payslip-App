@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from '@aws-cdk/core';
-import { UpdatedPipelineStackStack } from '../lib/updated-pipeline-stack-stack';
+import { MasterStack } from '../lib/AWSMasterStack';
 
 const app = new cdk.App();
-new UpdatedPipelineStackStack(app, 'UpdatedPipelineStackStack', {
+new MasterStack(app, 'UpdatedPipelineStack', {
   env: {
     account: "527531474351",
     region: "us-east-2",
