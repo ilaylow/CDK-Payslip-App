@@ -107,12 +107,21 @@ export class AWSPipelineStack extends cdk.Stack {
     };
 
     public createLoadBalancedFargateService(scope: cdk.Construct, vpc: ec2.Vpc, ecrRepository: ecr.Repository) {
+        const securityGroup = new ec2.SecurityGroup(this, 'mySecurityGroup', {
+            vpc: this.vpc,
+            description: 'Allow port to connect to EC2',
+            allowAllOutbound: true
+        });
+
+        securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(8080), 'Allows internet to send request')
+
         var fargateService = new ecspatterns.ApplicationLoadBalancedFargateService(scope, 'myLbFargateService', {
             vpc: vpc,
             memoryLimitMiB: 2048,
-            cpu: 512,
+            cpu: 1024,
             desiredCount: 1,
             assignPublicIp: true,
+            securityGroups: [securityGroup],
             //listenerPort: 8080,
             taskImageOptions: {
                 containerName: this.repoName,
