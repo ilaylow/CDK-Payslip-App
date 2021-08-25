@@ -6,6 +6,9 @@ on:
   push:
     branches: [ master, modularised ]
 
+env:
+  AWS_REGION: us-east-2 # set this to your preferred AWS region, e.g. us-west-1
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -27,3 +30,8 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+      
+      - name: Redeploy
+        id: Redeploy Infrastructure
+        run: |
+          cdk deploy --require-approval never

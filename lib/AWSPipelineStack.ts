@@ -24,12 +24,11 @@ export class AWSPipelineStack extends cdk.Stack {
         super(scope, id, props);
         this.repoName = repoName;
 
-        this.ecrRepository = new ecr.Repository(scope, this.repoName, {
+        this.ecrRepository = new ecr.Repository(this, this.repoName, {
             repositoryName: this.repoName,
         })
 
         this.vpc = vpc;
-        this.construct = scope;
     }
 
     public buildStack(imageLimit: number) {
@@ -122,7 +121,7 @@ export class AWSPipelineStack extends cdk.Stack {
             desiredCount: 1,
             assignPublicIp: true,
             securityGroups: [securityGroup],
-            //listenerPort: 8080,
+            listenerPort: 8080,
             taskImageOptions: {
                 containerName: this.repoName,
                 image: ecs.ContainerImage.fromRegistry("527531474351.dkr.ecr.us-east-2.amazonaws.com/payslip-image-repo:latest"),//ecs.ContainerImage.fromRegistry("okaycloud/dummywebserver:latest"), // Get Dummy Image
