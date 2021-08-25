@@ -7,6 +7,7 @@ import * as iam from '@aws-cdk/aws-iam';
 import * as pipeline from '@aws-cdk/aws-codepipeline';
 import * as pipelineActions from '@aws-cdk/aws-codepipeline-actions';
 import * as ecspatterns from '@aws-cdk/aws-ecs-patterns';
+import { PipelineProject } from "@aws-cdk/aws-codebuild";
 
 /* This stack will define the resources needed to initialise a codepipeline in AWS */
 
@@ -60,6 +61,7 @@ export class AWSPipelineStack extends cdk.Stack {
             cache: codebuild.Cache.local(codebuild.LocalCacheMode.DOCKER_LAYER, codebuild.LocalCacheMode.CUSTOM)
         });
         pipelineProject.role?.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonEC2ContainerRegistryPowerUser'));
+        this.ecrRepository.grantPullPush(pipelineProject.grantPrincipal);
 
         /* Create Source Action From ECR */
         var ecrSourceAction = new pipelineActions.EcrSourceAction({
@@ -124,10 +126,11 @@ export class AWSPipelineStack extends cdk.Stack {
             listenerPort: 8080,
             taskImageOptions: {
                 containerName: this.repoName,
-                image: ecs.ContainerImage.fromRegistry("527531474351.dkr.ecr.us-east-2.amazonaws.com/payslip-image-repo:latest"),//ecs.ContainerImage.fromRegistry("okaycloud/dummywebserver:latest"), // Get Dummy Image
+                image: ecs.ContainerImage.fromRegistry("okaycloud/dummywebserver:latest"),//ecs.ContainerImage.fromRegistry("okaycloud/dummywebserver:latest"), // Get Dummy Image
                 containerPort: 8080,
             },
         });
+
         fargateService.taskDefinition.executionRole?.addManagedPolicy((iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonEC2ContainerRegistryPowerUser')));
         fargateService.targetGroup.configureHealthCheck({
             path: "/actuator/health",

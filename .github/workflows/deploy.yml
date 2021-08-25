@@ -32,5 +32,6 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
       
       - name: Redeploy
-        run: |
+        run:
+          npm install -g aws-cdk
           cdk deploy --require-approval never
