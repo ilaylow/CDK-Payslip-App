@@ -32,6 +32,5 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
       
       - name: Redeploy
-        id: Redeploy Infrastructure
         run: |
           cdk deploy --require-approval never
