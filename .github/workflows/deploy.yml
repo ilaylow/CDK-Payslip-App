@@ -33,4 +33,5 @@ jobs:
       
       - name: Redeploy
         run:
+          npm install -g aws-cdk &&
           cdk deploy --require-approval never
