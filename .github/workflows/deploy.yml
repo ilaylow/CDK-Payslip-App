@@ -34,4 +34,5 @@ jobs:
       - name: Redeploy
         run:
           npm install -g aws-cdk &&
+          npm i typescript &&
           cdk deploy --require-approval never
