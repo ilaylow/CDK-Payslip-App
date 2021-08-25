@@ -11,7 +11,7 @@ export class MasterStack extends cdk.Stack {
         super(scope, id, props);
 
         const vpc = new ec2.Vpc(this, 'myVpc', {
-            maxAzs: 3,
+            maxAzs: 2,
         });
 
         let awsCdkPipelineStack = new AWSPipelineStack(this, "AWSCDKPipelineStack", repoName, vpc, props);

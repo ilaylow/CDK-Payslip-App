@@ -7,7 +7,6 @@ import * as iam from '@aws-cdk/aws-iam';
 import * as pipeline from '@aws-cdk/aws-codepipeline';
 import * as pipelineActions from '@aws-cdk/aws-codepipeline-actions';
 import * as ecspatterns from '@aws-cdk/aws-ecs-patterns';
-import { PipelineProject } from "@aws-cdk/aws-codebuild";
 
 /* This stack will define the resources needed to initialise a codepipeline in AWS */
 
@@ -27,7 +26,7 @@ export class AWSPipelineStack extends cdk.Stack {
 
         this.ecrRepository = new ecr.Repository(this, this.repoName, {
             repositoryName: this.repoName,
-        })
+        });
 
         this.vpc = vpc;
     }
@@ -132,11 +131,11 @@ export class AWSPipelineStack extends cdk.Stack {
         });
 
         fargateService.taskDefinition.executionRole?.addManagedPolicy((iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonEC2ContainerRegistryPowerUser')));
-        fargateService.targetGroup.configureHealthCheck({
-            path: "/actuator/health",
+        /* fargateService.targetGroup.configureHealthCheck({
+            path: "/health",
             healthyHttpCodes: "200",
             port: "8080"
-        });
+        }); */
 
         return fargateService;
     }
