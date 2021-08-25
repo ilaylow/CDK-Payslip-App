@@ -4,7 +4,7 @@ import * as cdk from '@aws-cdk/core';
 import { MasterStack } from '../lib/AWSMasterStack';
 
 const app = new cdk.App();
-new MasterStack(app, 'UpdatedPipelineStack', {
+new MasterStack(app, 'MasterPipelineStack', {
   env: {
     account: "527531474351",
     region: "us-east-2",
