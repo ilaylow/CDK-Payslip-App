@@ -10,7 +10,7 @@ import * as ecspatterns from '@aws-cdk/aws-ecs-patterns';
 
 /* This stack will define the resources needed to initialise a codepipeline in AWS */
 
-export class AWSPipelineStack extends cdk.Stack {
+export class AWSPipelineStack extends cdk.Construct {
     sourceOutput: pipeline.Artifact = new pipeline.Artifact();
     buildOutput: pipeline.Artifact = new pipeline.Artifact();
 
@@ -20,8 +20,8 @@ export class AWSPipelineStack extends cdk.Stack {
     fargateService: ecs.FargateService;
     construct: cdk.Construct;
 
-    constructor(scope: cdk.Construct, id: string, repoName: string, vpc: ec2.Vpc, props?: cdk.StackProps) {
-        super(scope, id, props);
+    constructor(scope: cdk.Construct, id: string, repoName: string, vpc: ec2.Vpc) {
+        super(scope, id);
         this.repoName = repoName;
 
         this.ecrRepository = new ecr.Repository(this, this.repoName, {
@@ -29,6 +29,10 @@ export class AWSPipelineStack extends cdk.Stack {
         });
 
         this.vpc = vpc;
+    }
+
+    public addFargateService(fargateService: ecs.FargateService){
+        this.fargateService = fargateService;
     }
 
     public buildStack(imageLimit: number) {
@@ -81,7 +85,7 @@ export class AWSPipelineStack extends cdk.Stack {
         /* Create Deploy Action From ECR to ECS Fargate Service */
         var deployAction = new pipelineActions.EcsDeployAction({
             actionName: 'EcsDeployAction',
-            service: this.createLoadBalancedFargateService(this, this.vpc, this.ecrRepository).service,
+            service: this.fargateService,
             input: this.buildOutput,
         });
 
@@ -106,37 +110,4 @@ export class AWSPipelineStack extends cdk.Stack {
 
     };
 
-    public createLoadBalancedFargateService(scope: cdk.Construct, vpc: ec2.Vpc, ecrRepository: ecr.Repository) {
-        const securityGroup = new ec2.SecurityGroup(this, 'mySecurityGroup', {
-            vpc: this.vpc,
-            description: 'Allow port to connect to EC2',
-            allowAllOutbound: true
-        });
-
-        securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(8080), 'Allows internet to send request')
-
-        var fargateService = new ecspatterns.ApplicationLoadBalancedFargateService(scope, 'myLbFargateService', {
-            vpc: vpc,
-            memoryLimitMiB: 2048,
-            cpu: 1024,
-            desiredCount: 1,
-            assignPublicIp: true,
-            securityGroups: [securityGroup],
-            listenerPort: 8080,
-            taskImageOptions: {
-                containerName: this.repoName,
-                image: ecs.ContainerImage.fromRegistry("okaycloud/dummywebserver:latest"),//ecs.ContainerImage.fromRegistry("okaycloud/dummywebserver:latest"), // Get Dummy Image
-                containerPort: 8080,
-            },
-        });
-
-        fargateService.taskDefinition.executionRole?.addManagedPolicy((iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonEC2ContainerRegistryPowerUser')));
-        /* fargateService.targetGroup.configureHealthCheck({
-            path: "/health",
-            healthyHttpCodes: "200",
-            port: "8080"
-        }); */
-
-        return fargateService;
-    }
 }
